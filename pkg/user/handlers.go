@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"text/template"
 )
 
 func (userService *UserService) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
@@ -30,17 +31,33 @@ func (userService *UserService) ServeHTTP(writer http.ResponseWriter, request *h
 }
 
 func (userService *UserService) AddHandlersToMux(mux *http.ServeMux) {
-	mux.HandleFunc("/api/users", userService.ServeHTTP)
-	mux.HandleFunc("/api/users/", userService.ServeHTTP)
+	mux.HandleFunc("/users", userService.ServeHTTP)
+	mux.HandleFunc("/users/", userService.ServeHTTP)
+}
+
+func renderResponse(writer http.ResponseWriter, data any, templateName string) {
+	if writer.Header().Get("Content-Type") == "application/json" {
+		bytes, _ := json.Marshal(data)
+		writer.WriteHeader(http.StatusOK)
+		writer.Write(bytes)
+	} else {
+		parsedTmpl, err := template.ParseFiles(templateName)
+		if err != nil {
+			writer.WriteHeader(http.StatusInternalServerError)
+			writer.Write([]byte(fmt.Sprintf("template not found: %s", templateName)))
+			return
+		}
+		tmpl := template.Must(parsedTmpl, nil)
+		writer.WriteHeader(http.StatusOK)
+		tmpl.Execute(writer, data)
+	}
 }
 
 func (userService *UserService) listUsers(writer http.ResponseWriter, request *http.Request) {
 	users := userService.ListAllUsers()
-	bytes, _ := json.Marshal(users)
 
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(http.StatusOK)
-	writer.Write(bytes)
+	writer.Header().Set("Content-Type", request.Header.Get("Content-Type"))
+	renderResponse(writer, users, "pkg/user/templates/list.html")
 }
 
 func extractUsername(r *http.Request) (string, error) {
@@ -74,11 +91,8 @@ func (userService *UserService) findByUsername(writer http.ResponseWriter, reque
 		return
 	}
 
-	bytes, _ := json.Marshal(users)
-
-	writer.Header().Set("Content-Type", "application/json")
-	writer.WriteHeader(http.StatusOK)
-	writer.Write(bytes)
+	writer.Header().Set("Content-Type", request.Header.Get("Content-Type"))
+	renderResponse(writer, users, "pkg/user/templates/show.html")
 }
 
 func (userService *UserService) deleteUser(writer http.ResponseWriter, request *http.Request) {

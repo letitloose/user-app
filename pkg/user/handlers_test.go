@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -39,7 +40,7 @@ func TestHandlers(t *testing.T) {
 	t.Run("test listUsers", func(t *testing.T) {
 		userService := setupHandlers(t)
 		defer teardownHandlers(userService)
-		request, err := http.NewRequest("GET", "/api/users", nil)
+		request, err := http.NewRequest("GET", "/users", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -47,6 +48,7 @@ func TestHandlers(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		handler := http.HandlerFunc(userService.ServeHTTP)
 
+		request.Header.Set("Content-Type", "application/json")
 		handler.ServeHTTP(recorder, request)
 
 		if status := recorder.Code; status != http.StatusOK {
@@ -64,7 +66,8 @@ func TestHandlers(t *testing.T) {
 	t.Run("test findUserByName", func(t *testing.T) {
 		userService := setupHandlers(t)
 		defer teardownHandlers(userService)
-		request, err := http.NewRequest("GET", "/api/users/test", nil)
+		request, err := http.NewRequest("GET", "/users/test", nil)
+		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -89,7 +92,8 @@ func TestHandlers(t *testing.T) {
 	t.Run("test removeUser", func(t *testing.T) {
 		userService := setupHandlers(t)
 		defer teardownHandlers(userService)
-		request, err := http.NewRequest("DELETE", "/api/users/test", nil)
+		request, err := http.NewRequest("DELETE", "/users/test", nil)
+		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -110,7 +114,8 @@ func TestHandlers(t *testing.T) {
 				recorder.Body.String(), expected)
 		}
 
-		request, err = http.NewRequest("GET", "/api/users/test", nil)
+		request, err = http.NewRequest("GET", "/users/test", nil)
+		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -132,7 +137,8 @@ func TestHandlers(t *testing.T) {
 		defer teardownHandlers(userService)
 		user := &User{Username: "test1", Password: "pass", FirstName: "lou", LastName: "gar"}
 		userJson, err := json.Marshal(user)
-		request, err := http.NewRequest("POST", "/api/users", bytes.NewBuffer(userJson))
+		request, err := http.NewRequest("POST", "/users", bytes.NewBuffer(userJson))
+		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -153,7 +159,8 @@ func TestHandlers(t *testing.T) {
 				recorder.Body.String(), expected)
 		}
 
-		request, err = http.NewRequest("GET", "/api/users/test1", nil)
+		request, err = http.NewRequest("GET", "/users/test1", nil)
+		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -175,7 +182,8 @@ func TestHandlers(t *testing.T) {
 		defer teardownHandlers(userService)
 		user := &User{Username: "test", Password: "pass", FirstName: "lou", LastName: "gar"}
 		userJson, err := json.Marshal(user)
-		request, err := http.NewRequest("PUT", "/api/users/test", bytes.NewBuffer(userJson))
+		request, err := http.NewRequest("PUT", "/users/test", bytes.NewBuffer(userJson))
+		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -196,7 +204,8 @@ func TestHandlers(t *testing.T) {
 				recorder.Body.String(), expected)
 		}
 
-		request, err = http.NewRequest("GET", "/api/users/test", nil)
+		request, err = http.NewRequest("GET", "/users/test", nil)
+		request.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -210,6 +219,36 @@ func TestHandlers(t *testing.T) {
 		if recorder.Body.String() != expected {
 			t.Errorf("handler returned unexpected body: got %v want %v",
 				recorder.Body.String(), expected)
+		}
+	})
+
+	t.Run("test renderResponse returns json if content-type is json", func(t *testing.T) {
+
+		userList := []User{{Username: "lou"}}
+		response := httptest.NewRecorder()
+		response.Header().Set("Content-Type", "application/json")
+		renderResponse(response, userList, "")
+
+		expected := `[{"user-name":"lou","password":"","first-name":"","last-name":"","email":""}]`
+		if response.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				response.Body.String(), expected)
+		}
+	})
+
+	t.Run("test renderResponse returns json if content-type is not json", func(t *testing.T) {
+
+		os.WriteFile("user.tmpl", []byte("<html>"), 0755)
+		defer os.Remove("user.tmpl")
+		userList := []User{{Username: "lou"}}
+		response := httptest.NewRecorder()
+		response.Header().Set("Content-Type", "application/text")
+		renderResponse(response, userList, "user.tmpl")
+
+		expected := "<html>"
+		if response.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				response.Body.String(), expected)
 		}
 	})
 }

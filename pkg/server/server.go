@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/letitloose/user-app/cmd/config"
+	"github.com/letitloose/user-app/pkg/static"
 	"github.com/letitloose/user-app/pkg/user"
 )
 
@@ -23,6 +24,7 @@ func NewServer(config *config.Config, userService *user.UserService) *Server {
 func (server *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 
+	static.AddHandlersToMux(mux)
 	log.Println("adding user handlers")
 	server.userService.AddHandlersToMux(mux)
 	return mux
