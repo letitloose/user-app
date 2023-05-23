@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>User List</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    </head>
+    <body>
+        <div class="container">
+            <a href="/users">&lt-Back to List</a>
+            <h1>{{.Username}}</h1>
+            <div class="row">
+                <div class="two columns">
+                    <label for="first-name">First Name:</label>
+                </div>
+                <div class="ten columns">
+                    {{.FirstName}}
+                </div>
+            </div>
+            <div class="row">
+                <div class="two columns">
+                    <label for="last-name">Last Name:</label>
+                </div>
+                <div class="ten columns">
+                    <p id="last-name">{{.LastName}}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="two columns">
+                    <label for="email">Email:</label>
+                </div>
+                <div class="ten columns">
+                    <p id="email">{{.Email}}</p>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="dialog-trigger">Delete {{.Username}}</button>
+              </div>
+          
+              <dialog id="dialog">
+                <header>Delete {{.Username}}</header>
+                <form method="dialog">
+                  <p>Do you really want to delete {{.Username}}?</p>
+                  <menu>
+                    <button value="Yes">Yes</button>
+                    <button value="No">No</button>
+                  </menu>
+                </form>
+              </dialog>
+        </div>
+        </body>
+    <script>
+        document.getElementById('dialog-trigger').addEventListener('click', () => {
+            document.getElementById('dialog').showModal()
+        })
+
+        document.getElementById('dialog').addEventListener('close', (event) => {
+            document.getElementById('dialog-result').innerText = `Your answer: ${event.target.returnValue}`
+            })
+    </script>
+</html>

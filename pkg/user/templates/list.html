@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>User List</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    </head>
+    <body>
+        <div class="container">
+            <h1>User List</h1>
+            <table class="u-full-width">
+                <thead>
+                    <tr>
+                        <td>Name</td>
+                        <td>Username</td>
+                        <td>Email</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{range .}}
+                    <tr>
+                        <td>{{.FirstName}}</td>
+                        <td><a href="/users/{{.Username}}">{{.Username}}</a></td>
+                        <td>{{.Email}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </body>
+</html>
